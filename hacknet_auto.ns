@@ -1,0 +1,65 @@
+/** @param {NS} ns **/
+export async function main(ns) {
+	ns.disableLog("getServerMoneyAvailable");
+	ns.disableLog("sleep")
+	var toBuyNext = false;
+    while(true) {
+		MyExecute(ns);
+		await ns.sleep(100);
+	}
+
+	
+	function MyExecute(ns) {
+		var nodes = ns.hacknet.numNodes();
+		var myCurrentMoney = ns.getServerMoneyAvailable("home");
+		var allUpgraded = true;
+		//Check Level and Cores
+		
+		if(true) {
+			for(var i = 0; i < nodes; i++) {
+				//Check level
+				
+				if(ns.hacknet.getNodeStats(i).level < 200) {
+					//If not too expensive
+					if(ns.hacknet.getLevelUpgradeCost(i, 1) < myCurrentMoney) {
+						//Buy nodeupgrade
+						ns.hacknet.upgradeLevel(i, 1)
+						allUpgraded = false;
+						ns.print("[Hacknet Script]: Purchasing LEVEL upgrade for Hacknet #{0}", i);
+					}
+				}
+				if(ns.hacknet.getNodeStats(i).ram < 64) { //If not max RAM
+					//If not too expensive
+					if(ns.hacknet.getRamUpgradeCost(i, 1) < myCurrentMoney) {
+						//Buy Ram upgrade
+						ns.hacknet.upgradeRam(i, 1);
+						ns.print("[Hacknet Script]: Purchasing RAM upgrade for Hacknet #{0}", i);
+						allUpgraded = false;
+					}
+				}
+				if(ns.hacknet.getNodeStats(i).cores < 16) { //If not max cores
+					//If not too expensive
+					if(ns.hacknet.getCoreUpgradeCost(i,1) < myCurrentMoney) {
+						ns.hacknet.upgradeCore(i,1);
+						ns.print("[Hacknet Script]: Purchasing CORE upgrade for Hacknet #{0}", i);
+						allUpgraded = false;
+					}
+				}
+			}
+		}
+		//If all upgrades have been complete, then buy a new server.
+		
+		if(allUpgraded || toBuyNext) {
+			toBuyNext = true; //Skip node calculations if a new node needs to be purchased.
+			ns.print("Waiting to by new node...");
+			if(ns.hacknet.getPurchaseNodeCost() <= myCurrentMoney) { //If can afford a new node.
+				//Buy new server.
+				ns.hacknet.purchaseNode();
+				ns.print("[Hacknet Script]: Purchasing a new node! Total Nodes: {0}", ns.hacknet.numNodes());
+				toBuyNext = false;
+			}
+		}
+		
+	}
+	
+}
